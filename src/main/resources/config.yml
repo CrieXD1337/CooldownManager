@@ -1,0 +1,6 @@
+cooldown-message: "§7> §cWait§e {time} §cseconds before using this command"
+commands:
+  command1:
+    cooldown: 10 # seconds
+  spawn:
+    cooldown: 30

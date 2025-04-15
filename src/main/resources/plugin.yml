@@ -1,0 +1,6 @@
+name: "CooldownManager"
+version: "1.0"
+main: ru.rexlite.CooldownManager
+api: ["1.1.0", "1.0.9"]
+description: "Adds cooldowns to commands"
+author: "Criex"

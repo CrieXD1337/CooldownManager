@@ -1,6 +1,11 @@
 cooldown-message: "§7> §cWait§e {time} §cseconds before using this command"
 commands:
-  command1:
+  warp:
     cooldown: 10 # seconds
-  spawn:
+    subommands:
+      vip: 30 # full command - /warp vip
+  rtp:
     cooldown: 30
+    subcommands:
+      near: 60
+      long: 10

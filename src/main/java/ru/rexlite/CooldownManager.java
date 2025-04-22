@@ -6,8 +6,6 @@ import cn.nukkit.event.Listener;
 import cn.nukkit.event.player.PlayerCommandPreprocessEvent;
 import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.utils.Config;
-import cn.nukkit.utils.TextFormat;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,31 +19,34 @@ public class CooldownManager extends PluginBase implements Listener {
     public void onEnable() {
         saveDefaultConfig();
         config = getConfig();
-        cooldownMessage = config.getString("cooldown-message", "§7> §cWait§e {time} §cseconds before using this command");
+        cooldownMessage = config.getString("cooldown-message");
 
         getServer().getPluginManager().registerEvents(this, this);
 
-        getLogger().info(TextFormat.GREEN + "CooldownManager has been enabled!");
+        getLogger().info("CooldownManager has been enabled!");
     }
 
     @Override
     public void onDisable() {
-        getLogger().info(TextFormat.RED + "CooldownManager has been disabled!");
+        getLogger().info("CooldownManager has been disabled!");
     }
 
     @EventHandler
     public void onPlayerCommand(PlayerCommandPreprocessEvent event) {
         Player player = event.getPlayer();
-        String command = event.getMessage().substring(1).split(" ")[0].toLowerCase();
+        String fullCommand = event.getMessage().substring(1);
+        String[] commandParts = fullCommand.split(" ");
 
-        if (config.exists("commands." + command)) {
-            int cooldownTime = config.getInt("commands." + command + ".cooldown", 0);
-
-            String cooldownKey = player.getName() + ":" + command;
-
+        String mainCommand = commandParts[0].toLowerCase();
+        if (config.exists("commands." + mainCommand)) {
+            String subCommand = null;
+            if (commandParts.length > 1) {
+                subCommand = commandParts[1].toLowerCase();
+            }
+            int cooldownTime = getCooldown(mainCommand, subCommand);
+            String cooldownKey = player.getName() + ":" + mainCommand + (subCommand != null ? ":" + subCommand : "");
             long currentTime = System.currentTimeMillis() / 1000;
             long lastUsed = cooldowns.getOrDefault(cooldownKey, 0L);
-
             if (currentTime - lastUsed < cooldownTime) {
                 int remainingTime = (int) (cooldownTime - (currentTime - lastUsed));
                 String message = cooldownMessage.replace("{time}", String.valueOf(remainingTime));
@@ -53,8 +54,23 @@ public class CooldownManager extends PluginBase implements Listener {
                 event.setCancelled(true);
                 return;
             }
-
             cooldowns.put(cooldownKey, currentTime);
+        }
+    }
+    /**
+     * Retrieves the cooldown time for a command or subcommand.
+     *
+     * @param mainCommand The main command (e.g., "warp")
+     * @param subCommand  The subcommand (e.g., "vip"), can be null
+     * @return The cooldown time in seconds
+     */
+    private int getCooldown(String mainCommand, String subCommand) {
+        // If a subcommand exists and is defined in the configuration, use its cooldown time
+        if (subCommand != null && config.exists("commands." + mainCommand + ".subcommands." + subCommand)) {
+            return config.getInt("commands." + mainCommand + ".subcommands." + subCommand, 0);
+        } else {
+            // Otherwise, use the cooldown time of the main command
+            return config.getInt("commands." + mainCommand + ".cooldown", 0);
         }
     }
 }
